@@ -1,0 +1,73 @@
+---
+import Page from "@/components/Page.astro";
+import PageHero from "@/components/PageHero.astro";
+import WishlistItem from "@/components/WishlistItem.astro";
+import { Button } from "@/components/starwind/button";
+import { itemsForOwner, wishlistForUser } from "@/lib/wishlists";
+
+const user = Astro.locals.user!;
+const wishlist = wishlistForUser(user.id)!;
+const { wanted, received } = itemsForOwner(wishlist.id);
+---
+
+<Page title={`Manage · ${wishlist.title}`}`}>
+  <PageHero title={wishlist.title} subtitle={wishlist.subtitle}>
+    <div class="mt-6 flex flex-wrap justify-center gap-2">
+      <Button variant="primary" size="sm" href="/manage/items/new">Add item</Button>
+      <Button variant="outline" size="sm" href={`/${user.username}`}>View public page</Button>
+      <Button variant="outline" size="sm" href="/manage/settings">Settings</Button>
+    </div>
+  </PageHero>
+
+  <section class="pb-12">
+    {
+      wanted.length === 0 ? (
+        <p class="text-center text-sm text-muted-foreground">Nothing on your wishlist yet. Add your first item above.</p>
+      ) : (
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {wanted.map((item) => (
+            <WishlistItem item={item}>
+              <Fragment slot="actions">
+                <Button variant="outline" size="sm" href={`/manage/items/${item.id}`}>Edit</Button>
+                <form method="post" action={`/manage/items/${item.id}/received`}>
+                  <input type="hidden" name="received" value="1" />
+                  <Button variant="outline" size="sm" type="submit">Received</Button>
+                </form>
+                <Button variant="ghost" size="sm" href={`/manage/items/${item.id}/delete`} class="ml-auto text-muted-foreground">Delete</Button>
+              </Fragment>
+            </WishlistItem>
+          ))}
+        </div>
+      )
+    }
+  </section>
+
+  {
+    received.length > 0 && (
+      <section class="pb-16">
+        <details class="group/received">
+          <summary class="cursor-pointer select-none text-sm font-medium text-muted-foreground hover:text-foreground py-2">
+            Received ({received.length})
+          </summary>
+          <p class="text-xs text-muted-foreground mb-4">Visitors can't see these.</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 opacity-75">
+            {received.map((item) => (
+              <WishlistItem item={item}>
+                <Fragment slot="actions">
+                  <span class="text-xs text-muted-foreground">
+                    Received {item.receivedAt!.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
+                  </span>
+                  <form method="post" action={`/manage/items/${item.id}/received`} class="ml-auto">
+                    <input type="hidden" name="received" value="0" />
+                    <Button variant="outline" size="sm" type="submit">Undo</Button>
+                  </form>
+                  <Button variant="ghost" size="sm" href={`/manage/items/${item.id}/delete`} class="text-muted-foreground">Delete</Button>
+                </Fragment>
+              </WishlistItem>
+            ))}
+          </div>
+        </details>
+      </section>
+    )
+  }
+</Page>

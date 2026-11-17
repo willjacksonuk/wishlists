@@ -1,0 +1,32 @@
+---
+import { eq } from "drizzle-orm";
+import Page from "@/components/Page.astro";
+import PageHero from "@/components/PageHero.astro";
+import { Button } from "@/components/starwind/button";
+import { db } from "@/db";
+import { users } from "@/db/schema";
+
+const id = Number(Astro.params.id);
+const user = Number.isInteger(id) ? db.select().from(users).where(eq(users.id, id)).get() : undefined;
+if (!user) return new Response("User not found", { status: 404 });
+if (user.id === Astro.locals.user!.id) return new Response("You can't delete yourself.", { status: 400 });
+
+if (Astro.request.method === "POST") {
+  // Their Wishlist, Items and sessions go too, via ON DELETE CASCADE.
+  db.delete(users).where(eq(users.id, user.id)).run();
+  return Astro.redirect("/admin/users");
+}
+---
+
+<Page title="Delete user">
+  <PageHero title={`Delete ${user.displayName}?`} subtitle={`/${user.username}`} />
+  <section class="pb-16 max-w-md mx-auto text-center">
+    <p class="text-sm text-muted-foreground mb-6">
+      This deletes their account and their whole wishlist. It can't be undone.
+    </p>
+    <form method="post" class="flex justify-center gap-2">
+      <Button variant="ghost" size="sm" href={`/admin/users/${user.id}`}>Cancel</Button>
+      <Button variant="error" size="sm" type="submit">Delete user</Button>
+    </form>
+  </section>
+</Page>

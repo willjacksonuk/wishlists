@@ -1,0 +1,45 @@
+---
+import { eq } from "drizzle-orm";
+import ItemForm from "@/components/ItemForm.astro";
+import Page from "@/components/Page.astro";
+import PageHero from "@/components/PageHero.astro";
+import { db } from "@/db";
+import { items } from "@/db/schema";
+import { parseItemForm, priceForInput, type ItemFormValues } from "@/lib/validation";
+import { ownItem, touchWishlist, wishlistForUser } from "@/lib/wishlists";
+
+const wishlist = wishlistForUser(Astro.locals.user!.id)!;
+const item = ownItem(wishlist.id, Number(Astro.params.id));
+if (!item) return new Response("Item not found", { status: 404 });
+
+let values: Partial<ItemFormValues> = {
+  title: item.title,
+  brand: item.brand ?? "",
+  description: item.description ?? "",
+  url: item.url ?? "",
+  price: priceForInput(item.pricePence),
+  discountCode: item.discountCode ?? "",
+  priority: item.priority ?? "",
+};
+let errors: Partial<Record<string, string>> = {};
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  const result = parseItemForm(form);
+  if (result.ok) {
+    db.update(items).set(result.item).where(eq(items.id, item.id)).run();
+    touchWishlist(wishlist.id);
+    return Astro.redirect("/manage");
+  }
+  values = Object.fromEntries(form) as Partial<ItemFormValues>;
+  errors = result.errors;
+  Astro.response.status = 400;
+}
+---
+
+<Page title="Edit item">
+  <PageHero title="Edit item" subtitle={item.title} />
+  <section class="pb-16 max-w-2xl mx-auto">
+    <ItemForm values={values} errors={errors} submitLabel="Save changes" />
+  </section>
+</Page>

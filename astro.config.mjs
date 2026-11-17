@@ -1,12 +1,28 @@
-import tailwindcss from "@tailwindcss/vite";
 // @ts-check
-import { defineConfig } from 'astro/config';
-import react from '@astrojs/react';
+import tailwindcss from "@tailwindcss/vite";
+import { defineConfig } from "astro/config";
+import react from "@astrojs/react";
+import node from "@astrojs/node";
 
 // https://astro.build/config
 export default defineConfig({
-	integrations: [react()],
-	vite: {
-		plugins: [tailwindcss()],
-	},
+  output: "server",
+  adapter: node({ mode: "standalone" }),
+  integrations: [react()],
+  security: {
+    // Trust the X-Forwarded-Host header from Dokploy's proxy for this host only,
+    // so origin checks on form posts see the public https URL.
+    allowedDomains: [
+      {
+        hostname: process.env.SITE_HOSTNAME ?? "wishlist.willjackson.uk",
+        protocol: "https",
+      },
+    ],
+  },
+  vite: {
+    plugins: [tailwindcss()],
+    ssr: {
+      external: ["better-sqlite3", "@node-rs/argon2"],
+    },
+  },
 });

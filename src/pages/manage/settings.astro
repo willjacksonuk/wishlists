@@ -1,0 +1,104 @@
+---
+import { eq } from "drizzle-orm";
+import Page from "@/components/Page.astro";
+import PageHero from "@/components/PageHero.astro";
+import { Button } from "@/components/starwind/button";
+import { db } from "@/db";
+import { users, wishlists } from "@/db/schema";
+import { endAllSessions, hashPassword, startSession, verifyPassword } from "@/lib/auth";
+import { errorClass, hintClass, inputClass, labelClass } from "@/lib/ui";
+import { field, passwordError } from "@/lib/validation";
+import { wishlistForUser } from "@/lib/wishlists";
+
+const user = Astro.locals.user!;
+let wishlist = wishlistForUser(user.id)!;
+let displayName = user.displayName;
+
+let detailsError: string | null = null;
+let passwordFormError: string | null = null;
+let notice: string | null = null;
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+
+  if (form.get("intent") === "details") {
+    const title = field(form, "title");
+    const newDisplayName = field(form, "displayName");
+    if (!title || !newDisplayName) {
+      detailsError = "Your wishlist needs a title, and you need a display name.";
+    } else {
+      db.transaction((tx) => {
+        tx.update(users).set({ displayName: newDisplayName }).where(eq(users.id, user.id)).run();
+        tx.update(wishlists)
+          .set({ title, subtitle: field(form, "subtitle"), updatedAt: new Date() })
+          .where(eq(wishlists.id, wishlist.id))
+          .run();
+      });
+      wishlist = wishlistForUser(user.id)!;
+      displayName = newDisplayName;
+      notice = "Saved.";
+    }
+  }
+
+  if (form.get("intent") === "password") {
+    const current = String(form.get("currentPassword") ?? "");
+    const next = String(form.get("newPassword") ?? "");
+    if (!(await verifyPassword(user.passwordHash, current))) {
+      passwordFormError = "Your current password isn't right.";
+    } else if (passwordError(next)) {
+      passwordFormError = passwordError(next);
+    } else {
+      db.update(users).set({ passwordHash: await hashPassword(next) }).where(eq(users.id, user.id)).run();
+      // Log out everywhere else, then start a fresh session here.
+      endAllSessions(user.id);
+      startSession(Astro.cookies, user.id);
+      notice = "Password changed. Any other devices have been logged out.";
+    }
+  }
+
+  if (detailsError || passwordFormError) Astro.response.status = 400;
+}
+---
+
+<Page title="Settings">
+  <PageHero title="Settings" />
+  <section class="pb-16 max-w-2xl mx-auto grid gap-8">
+    {notice && <p class="text-center text-sm text-success-foreground bg-success rounded-md px-4 py-2">{notice}</p>}
+
+    <form method="post" class="grid gap-5 bg-card border border-border rounded-md p-6">
+      <input type="hidden" name="intent" value="details" />
+      <h2 class="text-base font-semibold">Your wishlist</h2>
+      <div>
+        <label for="title" class={labelClass}>Title</label>
+        <input id="title" name="title" required value={wishlist.title} class={inputClass} />
+      </div>
+      <div>
+        <label for="subtitle" class={labelClass}>Subtitle</label>
+        <input id="subtitle" name="subtitle" value={wishlist.subtitle ?? ""} class={inputClass} />
+      </div>
+      <div>
+        <label for="displayName" class={labelClass}>Display name</label>
+        <input id="displayName" name="displayName" required value={displayName} class={inputClass} />
+        <p class={hintClass}>Shown on the list of wishlists. Your username, {user.username}, can't change.</p>
+        {detailsError && <p class={errorClass}>{detailsError}</p>}
+      </div>
+      <div class="flex justify-end"><Button variant="primary" size="sm" type="submit">Save</Button></div>
+    </form>
+
+    <form method="post" class="grid gap-5 bg-card border border-border rounded-md p-6">
+      <input type="hidden" name="intent" value="password" />
+      <h2 class="text-base font-semibold">Change password</h2>
+      <input type="hidden" name="username" autocomplete="username" value={user.username} />
+      <div>
+        <label for="currentPassword" class={labelClass}>Current password</label>
+        <input id="currentPassword" name="currentPassword" type="password" required autocomplete="current-password" class={inputClass} />
+      </div>
+      <div>
+        <label for="newPassword" class={labelClass}>New password</label>
+        <input id="newPassword" name="newPassword" type="password" required minlength="8" autocomplete="new-password" class={inputClass} />
+        {passwordFormError && <p class={errorClass}>{passwordFormError}</p>}
+      </div>
+      <div class="flex justify-end"><Button variant="primary" size="sm" type="submit">Change password</Button></div>
+    </form>
+  </section>
+</Page>

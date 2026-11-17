@@ -1,0 +1,93 @@
+---
+import { sql } from "drizzle-orm";
+import Page from "@/components/Page.astro";
+import PageHero from "@/components/PageHero.astro";
+import TemporaryPassword from "@/components/TemporaryPassword.astro";
+import { Badge } from "@/components/starwind/badge";
+import { Button } from "@/components/starwind/button";
+import { db } from "@/db";
+import { users } from "@/db/schema";
+import { temporaryPassword } from "@/lib/auth";
+import { errorClass, hintClass, inputClass, labelClass } from "@/lib/ui";
+import { createUser, usernameTaken } from "@/lib/users";
+import { field, usernameError } from "@/lib/validation";
+
+let errors: Partial<Record<"username" | "displayName", string>> = {};
+let values = { username: "", displayName: "", isAdmin: false };
+let created: { username: string; password: string } | null = null;
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  values = {
+    username: (field(form, "username") ?? "").toLowerCase(),
+    displayName: field(form, "displayName") ?? "",
+    isAdmin: form.get("isAdmin") === "on",
+  };
+
+  const usernameProblem = usernameError(values.username);
+  if (usernameProblem) errors.username = usernameProblem;
+  else if (usernameTaken(values.username)) errors.username = "That username is already taken.";
+  if (!values.displayName) errors.displayName = "Please give them a display name.";
+
+  if (Object.keys(errors).length === 0) {
+    const password = temporaryPassword();
+    await createUser({ ...values, password });
+    created = { username: values.username, password };
+    values = { username: "", displayName: "", isAdmin: false };
+  } else {
+    Astro.response.status = 400;
+  }
+}
+
+const allUsers = db.select().from(users).orderBy(sql`${users.displayName} collate nocase`).all();
+const me = Astro.locals.user!;
+---
+
+<Page title="Users">
+  <PageHero title="Users" />
+  <section class="pb-16 max-w-2xl mx-auto grid gap-8">
+    {created && <TemporaryPassword {...created} message="User created. Send them these details to log in:" />}
+
+    <ul class="grid gap-2">
+      {
+        allUsers.map((u) => (
+          <li class="flex items-center justify-between gap-4 bg-card border border-border rounded-md px-5 py-3">
+            <div class="min-w-0">
+              <p class="text-sm font-semibold truncate">
+                {u.displayName}
+                {u.id === me.id && <span class="font-normal text-muted-foreground"> (you)</span>}
+              </p>
+              <p class="text-xs text-muted-foreground truncate">/{u.username}</p>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              {u.isAdmin && <Badge variant="ghost" size="sm">Admin</Badge>}
+              <Button variant="outline" size="sm" href={`/admin/users/${u.id}`}>Edit</Button>
+            </div>
+          </li>
+        ))
+      }
+    </ul>
+
+    <form method="post" class="grid gap-5 bg-card border border-border rounded-md p-6">
+      <h2 class="text-base font-semibold">Add a user</h2>
+      <div class="grid gap-5 sm:grid-cols-2">
+        <div>
+          <label for="username" class={labelClass}>Username</label>
+          <input id="username" name="username" required autocapitalize="none" value={values.username} class={inputClass} />
+          <p class={hintClass}>Lowercase letters, numbers and hyphens. It becomes their wishlist's address and can't be changed.</p>
+          {errors.username && <p class={errorClass}>{errors.username}</p>}
+        </div>
+        <div>
+          <label for="displayName" class={labelClass}>Display name</label>
+          <input id="displayName" name="displayName" required value={values.displayName} class={inputClass} />
+          {errors.displayName && <p class={errorClass}>{errors.displayName}</p>}
+        </div>
+      </div>
+      <label class="flex items-center gap-2 text-sm">
+        <input type="checkbox" name="isAdmin" checked={values.isAdmin} class="rounded border-input text-primary focus:ring-outline/50" />
+        Admin
+      </label>
+      <div class="flex justify-end"><Button variant="primary" size="sm" type="submit">Add user</Button></div>
+    </form>
+  </section>
+</Page>

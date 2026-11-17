@@ -1,0 +1,99 @@
+---
+import { eq } from "drizzle-orm";
+import Page from "@/components/Page.astro";
+import PageHero from "@/components/PageHero.astro";
+import TemporaryPassword from "@/components/TemporaryPassword.astro";
+import { Button } from "@/components/starwind/button";
+import { db } from "@/db";
+import { users } from "@/db/schema";
+import { endAllSessions, hashPassword, temporaryPassword } from "@/lib/auth";
+import { errorClass, hintClass, inputClass, labelClass } from "@/lib/ui";
+import { field } from "@/lib/validation";
+
+const id = Number(Astro.params.id);
+let user = Number.isInteger(id) ? db.select().from(users).where(eq(users.id, id)).get() : undefined;
+if (!user) return new Response("User not found", { status: 404 });
+
+const isMe = user.id === Astro.locals.user!.id;
+let error: string | null = null;
+let notice: string | null = null;
+let reset: string | null = null;
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+
+  if (form.get("intent") === "details") {
+    const displayName = field(form, "displayName");
+    // You can't remove your own admin status, so there's always at least one admin.
+    const isAdmin = isMe ? true : form.get("isAdmin") === "on";
+    if (!displayName) {
+      error = "Please give them a display name.";
+      Astro.response.status = 400;
+    } else {
+      db.update(users).set({ displayName, isAdmin }).where(eq(users.id, user.id)).run();
+      notice = "Saved.";
+    }
+  }
+
+  if (form.get("intent") === "reset") {
+    reset = temporaryPassword();
+    db.update(users).set({ passwordHash: await hashPassword(reset) }).where(eq(users.id, user.id)).run();
+    endAllSessions(user.id);
+  }
+
+  user = db.select().from(users).where(eq(users.id, id)).get()!;
+}
+---
+
+<Page title={`Edit ${user.displayName}`}>
+  <PageHero title={user.displayName} subtitle={`/${user.username}`} />
+  <section class="pb-16 max-w-2xl mx-auto grid gap-8">
+    {notice && <p class="text-center text-sm text-success-foreground bg-success rounded-md px-4 py-2">{notice}</p>}
+    {reset && (
+      <TemporaryPassword
+        username={user.username}
+        password={reset}
+        message={isMe ? "Your password has been reset and you've been logged out everywhere. Log in again with:" : "Password reset, and they've been logged out everywhere. Send them their new details:"}
+      />
+    )}
+
+    <form method="post" class="grid gap-5 bg-card border border-border rounded-md p-6">
+      <input type="hidden" name="intent" value="details" />
+      <h2 class="text-base font-semibold">Details</h2>
+      <div>
+        <label for="displayName" class={labelClass}>Display name</label>
+        <input id="displayName" name="displayName" required value={user.displayName} class={inputClass} />
+        {error && <p class={errorClass}>{error}</p>}
+      </div>
+      <div>
+        <label class="flex items-center gap-2 text-sm">
+          <input type="checkbox" name="isAdmin" checked={user.isAdmin} disabled={isMe} class="rounded border-input text-primary focus:ring-outline/50 disabled:opacity-50" />
+          Admin
+        </label>
+        {isMe && <p class={hintClass}>You can't remove your own admin status.</p>}
+      </div>
+      <div class="flex justify-end"><Button variant="primary" size="sm" type="submit">Save</Button></div>
+    </form>
+
+    <div class="grid gap-4 bg-card border border-border rounded-md p-6">
+      <h2 class="text-base font-semibold">Password</h2>
+      <p class="text-sm text-muted-foreground">Resetting gives them a new temporary password and logs them out everywhere.</p>
+      <form method="post" class="flex justify-end">
+        <input type="hidden" name="intent" value="reset" />
+        <Button variant="outline" size="sm" type="submit">Reset password</Button>
+      </form>
+    </div>
+
+    {
+      !isMe && (
+        <div class="grid gap-4 bg-card border border-border rounded-md p-6">
+          <h2 class="text-base font-semibold">Delete user</h2>
+          <p class="text-sm text-muted-foreground">Deletes {user.displayName} and their wishlist.</p>
+          <div class="flex justify-end">
+            <Button variant="error" size="sm" href={`/admin/users/${user.id}/delete`}>Delete user</Button>
+          </div>
+        </div>
+      )
+    }
+  </section>
+</Page>
