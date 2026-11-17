@@ -1,4 +1,4 @@
-# Wishlist — wishlist.willjackson.uk
+# Wishlists — wishlists.willjackson.uk
 
 A small wishlist site. Each User has one public Wishlist, and manages it after logging in. Admins create Users. See [CONTEXT.md](./CONTEXT.md) for the vocabulary and [docs/adr](./docs/adr) for the main decisions.
 
@@ -26,7 +26,7 @@ npm run import-legacy -- --username will --display-name "Will Jackson"   # first
 npm run dev      # http://localhost:4321
 ```
 
-The database lives at `./data/wishlist.db` (override with `DATABASE_PATH`). Migrations in `./drizzle` run automatically on start-up.
+The database lives at `./data/wishlists.db` (override with `DATABASE_PATH`). Migrations in `./drizzle` run automatically on start-up.
 
 After changing `src/db/schema.ts`, run `npm run db:generate` and commit the new migration.
 

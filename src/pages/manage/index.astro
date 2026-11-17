@@ -10,7 +10,7 @@ const wishlist = wishlistForUser(user.id)!;
 const { wanted, received } = itemsForOwner(wishlist.id);
 ---
 
-<Page title={`Manage · ${wishlist.title}`}`}>
+<Page title={`Manage · ${wishlist.title}`}>
   <PageHero title={wishlist.title} subtitle={wishlist.subtitle}>
     <div class="mt-6 flex flex-wrap justify-center gap-2">
       <Button variant="primary" size="sm" href="/manage/items/new">Add item</Button>

@@ -1,17 +1,17 @@
 # Used by Dokploy's "Docker Compose" service. The named volume keeps the
 # SQLite database across deploys; Dokploy adds the domain and HTTPS routing.
 services:
-  wishlist:
+  wishlists:
     build:
       context: .
       args:
         # Must match the public domain, or form posts fail Astro's origin check.
-        SITE_HOSTNAME: ${SITE_HOSTNAME:-wishlist.willjackson.uk}
+        SITE_HOSTNAME: ${SITE_HOSTNAME:-wishlists.willjackson.uk}
     restart: unless-stopped
     expose:
       - "4321"
     volumes:
-      - wishlist-data:/data
+      - wishlists-data:/data
 
 volumes:
-  wishlist-data:
+  wishlists-data:

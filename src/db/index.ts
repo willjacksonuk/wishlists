@@ -5,7 +5,7 @@ import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import * as schema from "./schema";
 
-const databasePath = resolve(process.env.DATABASE_PATH ?? "./data/wishlist.db");
+const databasePath = resolve(process.env.DATABASE_PATH ?? "./data/wishlists.db");
 mkdirSync(dirname(databasePath), { recursive: true });
 
 const sqlite = new Database(databasePath);

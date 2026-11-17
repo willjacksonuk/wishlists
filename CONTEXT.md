@@ -1,4 +1,4 @@
-# Wishlist
+# Wishlists
 
 A small site where each person keeps one public wishlist of gift ideas, and manages it after logging in.
 

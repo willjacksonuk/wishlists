@@ -7,7 +7,7 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 COPY package.json package-lock.json ./
 RUN npm ci
-ARG SITE_HOSTNAME=wishlist.willjackson.uk
+ARG SITE_HOSTNAME=wishlists.willjackson.uk
 ENV SITE_HOSTNAME=$SITE_HOSTNAME
 COPY . .
 RUN npm run build && npm prune --omit=dev
@@ -17,7 +17,7 @@ WORKDIR /app
 ENV NODE_ENV=production \
     HOST=0.0.0.0 \
     PORT=4321 \
-    DATABASE_PATH=/data/wishlist.db
+    DATABASE_PATH=/data/wishlists.db
 COPY --from=build /app/package.json ./
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist

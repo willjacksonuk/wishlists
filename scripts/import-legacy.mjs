@@ -26,7 +26,7 @@ if (!username || !displayName || !/^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$/.test(
   process.exit(1);
 }
 
-const databasePath = resolve(process.env.DATABASE_PATH ?? "./data/wishlist.db");
+const databasePath = resolve(process.env.DATABASE_PATH ?? "./data/wishlists.db");
 mkdirSync(dirname(databasePath), { recursive: true });
 const sqlite = new Database(databasePath);
 sqlite.pragma("foreign_keys = ON");

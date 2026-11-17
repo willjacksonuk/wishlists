@@ -14,7 +14,7 @@ export default defineConfig({
     // so origin checks on form posts see the public https URL.
     allowedDomains: [
       {
-        hostname: process.env.SITE_HOSTNAME ?? "wishlist.willjackson.uk",
+        hostname: process.env.SITE_HOSTNAME ?? "wishlists.willjackson.uk",
         protocol: "https",
       },
     ],
