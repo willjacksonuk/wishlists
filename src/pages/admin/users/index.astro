@@ -43,7 +43,7 @@ const allUsers = db.select().from(users).orderBy(sql`${users.displayName} collat
 const me = Astro.locals.user!;
 ---
 
-<Page title="Users" headerTitle="Users" headerHref="/admin/users">
+<Page title="Users">
   <PageHero title="Users" />
   <section class="pb-16 max-w-2xl mx-auto grid gap-8">
     {created && <TemporaryPassword {...created} message="User created. Send them these details to log in:" />}

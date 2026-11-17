@@ -76,8 +76,11 @@ This only needs doing once, ever.
 2. Run:
 
    ```sh
+   cd /app
    node scripts/import-legacy.mjs --username will --display-name "Will Jackson"
    ```
+
+   The terminal opens at `/`, so the `cd /app` matters.
 
 3. It prints a temporary password. Copy it.
 4. Go to `https://wishlist.willjackson.uk/login`, log in as `will` with that password, and change it straight away in **Manage → Settings**.

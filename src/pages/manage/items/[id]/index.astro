@@ -37,7 +37,7 @@ if (Astro.request.method === "POST") {
 }
 ---
 
-<Page title="Edit item" headerTitle={wishlist.title} headerHref="/manage">
+<Page title="Edit item">
   <PageHero title="Edit item" subtitle={item.title} />
   <section class="pb-16 max-w-2xl mx-auto">
     <ItemForm values={values} errors={errors} submitLabel="Save changes" />

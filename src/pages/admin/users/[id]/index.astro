@@ -45,7 +45,7 @@ if (Astro.request.method === "POST") {
 }
 ---
 
-<Page title={`Edit ${user.displayName}`} headerTitle="Users" headerHref="/admin/users">
+<Page title={`Edit ${user.displayName}`}>
   <PageHero title={user.displayName} subtitle={`/${user.username}`} />
   <section class="pb-16 max-w-2xl mx-auto grid gap-8">
     {notice && <p class="text-center text-sm text-success-foreground bg-success rounded-md px-4 py-2">{notice}</p>}

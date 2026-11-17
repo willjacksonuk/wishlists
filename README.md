@@ -32,6 +32,6 @@ After changing `src/db/schema.ts`, run `npm run db:generate` and commit the new 
 
 ## Deploying
 
-See [docs/deploying-to-dokploy.md](./docs/deploying-to-dokploy.md). In short: a Dokploy **Compose** service using `docker-compose.yml` (which keeps the database in a named volume), a domain on container port `4321`, then run `node scripts/import-legacy.mjs` once in the container to create the first admin.
+See [docs/deploying-to-dokploy.md](./docs/deploying-to-dokploy.md). In short: a Dokploy **Compose** service using `docker-compose.yml` (which keeps the database in a named volume), a domain on container port `4321`, then run `cd /app && node scripts/import-legacy.mjs` once in the container to create the first admin.
 
 Backups of `/data` aren't set up yet.
