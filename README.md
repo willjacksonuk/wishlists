@@ -1,4 +1,4 @@
-# Wishlists — wishlists.willjackson.uk
+# Wishlists
 
 A small wishlist site. Each User has one public Wishlist, and manages it after logging in. Admins create Users. See [CONTEXT.md](./CONTEXT.md) for the vocabulary and [docs/adr](./docs/adr) for the main decisions.
 
