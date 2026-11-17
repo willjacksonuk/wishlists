@@ -30,17 +30,8 @@ The database lives at `./data/wishlist.db` (override with `DATABASE_PATH`). Migr
 
 After changing `src/db/schema.ts`, run `npm run db:generate` and commit the new migration.
 
-## Deploying with Dokploy
+## Deploying
 
-1. Create an Application from this repo with the **Dockerfile** build type.
-2. Add a volume mount at `/data` so the database survives redeploys.
-3. Set the domain to `wishlist.willjackson.uk`, container port `4321`. If you use a different domain, set the `SITE_HOSTNAME` build argument to it so form posts pass Astro's origin check behind the proxy.
-4. Deploy, then open the container's terminal once and run:
-
-   ```sh
-   node scripts/import-legacy.mjs --username will --display-name "Will Jackson"
-   ```
-
-   It creates you as an Admin with the old wishlist's items and prints a temporary password. Change it in Settings after logging in. It refuses to run if any users exist.
+See [docs/deploying-to-dokploy.md](./docs/deploying-to-dokploy.md). In short: a Dokploy **Compose** service using `docker-compose.yml` (which keeps the database in a named volume), a domain on container port `4321`, then run `node scripts/import-legacy.mjs` once in the container to create the first admin.
 
 Backups of `/data` aren't set up yet.
