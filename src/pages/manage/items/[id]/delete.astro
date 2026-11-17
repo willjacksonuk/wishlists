@@ -1,0 +1,32 @@
+---
+import { eq } from "drizzle-orm";
+import Page from "@/components/Page.astro";
+import PageHero from "@/components/PageHero.astro";
+import { Button } from "@/components/starwind/button";
+import { db } from "@/db";
+import { items } from "@/db/schema";
+import { ownItem, touchWishlist, wishlistForUser } from "@/lib/wishlists";
+
+const wishlist = wishlistForUser(Astro.locals.user!.id)!;
+const item = ownItem(wishlist.id, Number(Astro.params.id));
+if (!item) return new Response("Item not found", { status: 404 });
+
+if (Astro.request.method === "POST") {
+  db.delete(items).where(eq(items.id, item.id)).run();
+  touchWishlist(wishlist.id);
+  return Astro.redirect("/manage");
+}
+---
+
+<Page title="Delete item" headerTitle={wishlist.title} headerHref="/manage">
+  <PageHero title="Delete this item?" subtitle={item.title} />
+  <section class="pb-16 max-w-md mx-auto text-center">
+    <p class="text-sm text-muted-foreground mb-6">
+      This can't be undone. If you've been given it, mark it as Received instead to keep a record.
+    </p>
+    <form method="post" class="flex justify-center gap-2">
+      <Button variant="ghost" size="sm" href="/manage">Cancel</Button>
+      <Button variant="error" size="sm" type="submit">Delete item</Button>
+    </form>
+  </section>
+</Page>

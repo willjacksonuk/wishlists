@@ -1,0 +1,34 @@
+---
+import ItemForm from "@/components/ItemForm.astro";
+import Page from "@/components/Page.astro";
+import PageHero from "@/components/PageHero.astro";
+import { db } from "@/db";
+import { items } from "@/db/schema";
+import { parseItemForm, type ItemFormValues } from "@/lib/validation";
+import { touchWishlist, wishlistForUser } from "@/lib/wishlists";
+
+const wishlist = wishlistForUser(Astro.locals.user!.id)!;
+
+let values: Partial<ItemFormValues> = {};
+let errors: Partial<Record<string, string>> = {};
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  const result = parseItemForm(form);
+  if (result.ok) {
+    db.insert(items).values({ ...result.item, wishlistId: wishlist.id }).run();
+    touchWishlist(wishlist.id);
+    return Astro.redirect("/manage");
+  }
+  values = Object.fromEntries(form) as Partial<ItemFormValues>;
+  errors = result.errors;
+  Astro.response.status = 400;
+}
+---
+
+<Page title="Add item" headerTitle={wishlist.title} headerHref="/manage">
+  <PageHero title="Add item" />
+  <section class="pb-16 max-w-2xl mx-auto">
+    <ItemForm values={values} errors={errors} submitLabel="Add item" />
+  </section>
+</Page>

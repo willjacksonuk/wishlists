@@ -1,0 +1,61 @@
+---
+import { Button } from "@/components/starwind/button";
+import { priorities } from "@/db/schema";
+import { errorClass, hintClass, inputClass, labelClass } from "@/lib/ui";
+import type { ItemFormValues } from "@/lib/validation";
+
+interface Props {
+  values?: Partial<ItemFormValues>;
+  errors?: Partial<Record<string, string>>;
+  submitLabel: string;
+}
+
+const { values = {}, errors = {}, submitLabel } = Astro.props;
+const priorityLabel = { high: "High", medium: "Medium", low: "Low" };
+---
+
+<form method="post" class="grid gap-5 bg-card border border-border rounded-md p-6">
+  <div>
+    <label for="title" class={labelClass}>Title</label>
+    <input id="title" name="title" required value={values.title} class={inputClass} />
+    {errors.title && <p class={errorClass}>{errors.title}</p>}
+  </div>
+  <div class="grid gap-5 sm:grid-cols-2">
+    <div>
+      <label for="brand" class={labelClass}>Brand</label>
+      <input id="brand" name="brand" value={values.brand} class={inputClass} />
+    </div>
+    <div>
+      <label for="priority" class={labelClass}>Priority</label>
+      <select id="priority" name="priority" class={inputClass}>
+        <option value="" selected={!values.priority}>None</option>
+        {priorities.map((p) => <option value={p} selected={values.priority === p}>{priorityLabel[p]}</option>)}
+      </select>
+    </div>
+  </div>
+  <div>
+    <label for="description" class={labelClass}>Description</label>
+    <textarea id="description" name="description" rows="3" class={inputClass}>{values.description}</textarea>
+  </div>
+  <div class="grid gap-5 sm:grid-cols-[1fr_10rem]">
+    <div>
+      <label for="url" class={labelClass}>Link</label>
+      <input id="url" name="url" type="url" placeholder="https://" value={values.url} class={inputClass} />
+      {errors.url && <p class={errorClass}>{errors.url}</p>}
+    </div>
+    <div>
+      <label for="price" class={labelClass}>Price (£)</label>
+      <input id="price" name="price" inputmode="decimal" placeholder="40.00" value={values.price} class={inputClass} />
+      {errors.price && <p class={errorClass}>{errors.price}</p>}
+    </div>
+  </div>
+  <div>
+    <label for="discountCode" class={labelClass}>Discount code</label>
+    <input id="discountCode" name="discountCode" value={values.discountCode} class={inputClass} />
+    <p class={hintClass}>Shown on the item as written, e.g. "20% off: WELCOME20".</p>
+  </div>
+  <div class="flex justify-end gap-2 pt-2">
+    <Button variant="ghost" size="sm" href="/manage">Cancel</Button>
+    <Button variant="primary" size="sm" type="submit">{submitLabel}</Button>
+  </div>
+</form>

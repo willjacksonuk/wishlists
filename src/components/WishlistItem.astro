@@ -1,20 +1,15 @@
 ---
 import { Badge } from "@/components/starwind/badge";
 import { Button } from "@/components/starwind/button";
+import type { Item } from "@/db/schema";
+import { formatPrice } from "@/lib/validation";
 
 interface Props {
-  item: {
-    title: string;
-    brand?: string | null;
-    description?: string | null;
-    code?: string | null;
-    url?: string | null;
-    price?: string | null;
-    priority?: "high" | "medium" | "low" | null;
-  };
+  item: Item;
 }
 
 const { item } = Astro.props;
+const hasActions = Astro.slots.has("actions");
 
 const priorityBadge: Record<string, "success" | "info" | "ghost"> = {
   high: "success",
@@ -73,9 +68,9 @@ const priorityLabel: Record<string, string> = {
       )
     }
     {
-      item.code ? (
+      item.discountCode ? (
         <p class="text-xs text-muted-foreground leading-relaxed flex-1 mb-4">
-          {item.code}
+          {item.discountCode}
         </p>
       ) : (
         <span class="mb-2" />
@@ -86,9 +81,9 @@ const priorityLabel: Record<string, string> = {
     class="flex items-center justify-between mt-auto pt-3 border-t border-border"
   >
     {
-      item.price ? (
+      item.pricePence !== null ? (
         <span class="text-sm font-semibold text-primary-accent">
-          £{item.price}
+          {formatPrice(item.pricePence)}
         </span>
       ) : (
         <span />
@@ -108,4 +103,11 @@ const priorityLabel: Record<string, string> = {
       )
     }
   </div>
+  {
+    hasActions && (
+      <div class="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-border">
+        <slot name="actions" />
+      </div>
+    )
+  }
 </article>

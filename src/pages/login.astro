@@ -1,0 +1,53 @@
+---
+import { eq } from "drizzle-orm";
+import Page from "@/components/Page.astro";
+import PageHero from "@/components/PageHero.astro";
+import { Button } from "@/components/starwind/button";
+import { db } from "@/db";
+import { users } from "@/db/schema";
+import { startSession, verifyPassword } from "@/lib/auth";
+import { errorClass, inputClass, labelClass } from "@/lib/ui";
+import { field } from "@/lib/validation";
+
+/** Only send people back to pages on this site. */
+const nextParam = Astro.url.searchParams.get("next") ?? "";
+const next = nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : "/manage";
+
+if (Astro.locals.user) return Astro.redirect(next);
+
+let error: string | null = null;
+let username = "";
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  username = (field(form, "username") ?? "").toLowerCase();
+  const password = form.get("password");
+
+  const user = db.select().from(users).where(eq(users.username, username)).get();
+  if (user && typeof password === "string" && (await verifyPassword(user.passwordHash, password))) {
+    startSession(Astro.cookies, user.id);
+    return Astro.redirect(next);
+  }
+  error = "That username and password don't match.";
+  Astro.response.status = 400;
+}
+---
+
+<Page title="Log in">
+  <PageHero title="Log in" />
+  <section class="pb-16 max-w-sm mx-auto">
+    <form method="post" class="grid gap-5 bg-card border border-border rounded-md p-6">
+      <div>
+        <label for="username" class={labelClass}>Username</label>
+        <input id="username" name="username" required autocomplete="username" autocapitalize="none" value={username} class={inputClass} />
+      </div>
+      <div>
+        <label for="password" class={labelClass}>Password</label>
+        <input id="password" name="password" type="password" required autocomplete="current-password" class={inputClass} />
+        {error && <p class={errorClass}>{error}</p>}
+      </div>
+      <Button variant="primary" size="sm" type="submit">Log in</Button>
+    </form>
+    <p class="mt-4 text-center text-xs text-muted-foreground">Forgotten your password? Ask an admin to reset it.</p>
+  </section>
+</Page>

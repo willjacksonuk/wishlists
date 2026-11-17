@@ -1,0 +1,22 @@
+---
+interface Props {
+  lastUpdated?: Date;
+}
+
+const { lastUpdated } = Astro.props;
+---
+
+<footer class="border-t border-border py-6">
+  <div class="max-w-5xl mx-auto px-6 flex justify-center">
+    {
+      lastUpdated && (
+        <p class="text-xs text-muted-foreground/50">
+          Last updated{" "}
+          <time datetime={lastUpdated.toISOString()}>
+            {lastUpdated.toLocaleDateString("en-GB", { month: "long", year: "numeric" })}
+          </time>
+        </p>
+      )
+    }
+  </div>
+</footer>

@@ -1,0 +1,28 @@
+---
+import Page from "@/components/Page.astro";
+import PageHero from "@/components/PageHero.astro";
+import WishlistItem from "@/components/WishlistItem.astro";
+import { visibleItems, wishlistByUsername } from "@/lib/wishlists";
+
+const found = wishlistByUsername(Astro.params.username ?? "");
+if (!found) return new Response("Wishlist not found", { status: 404 });
+
+const { wishlist } = found;
+const items = visibleItems(wishlist.id);
+---
+
+<Page title={wishlist.title} lastUpdated={wishlist.updatedAt}>
+  <PageHero title={wishlist.title} subtitle={wishlist.subtitle} />
+
+  <section class="pb-16">
+    {
+      items.length === 0 ? (
+        <p class="text-center text-sm text-muted-foreground">Nothing on this wishlist yet.</p>
+      ) : (
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {items.map((item) => <WishlistItem item={item} />)}
+        </div>
+      )
+    }
+  </section>
+</Page>

@@ -1,0 +1,26 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import SiteHeader from "./SiteHeader.astro";
+import SiteFooter from "./SiteFooter.astro";
+
+interface Props {
+  /** The browser tab title. */
+  title: string;
+  /** The title shown on the left of the header; defaults to `title`. */
+  headerTitle?: string;
+  headerHref?: string;
+  lastUpdated?: Date;
+}
+
+const { title, headerTitle = title, headerHref, lastUpdated } = Astro.props;
+---
+
+<Layout title={title}>
+  <main class="min-h-screen flex flex-col">
+    <SiteHeader title={headerTitle} titleHref={headerHref} />
+    <div class="max-w-5xl mx-auto px-6 w-full flex-1">
+      <slot />
+    </div>
+    <SiteFooter lastUpdated={lastUpdated} />
+  </main>
+</Layout>
